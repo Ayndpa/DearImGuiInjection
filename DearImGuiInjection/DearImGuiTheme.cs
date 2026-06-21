@@ -1,4 +1,5 @@
-﻿using System.IO;
+using System;
+using System.IO;
 using System.Numerics;
 using ImGuiNET;
 
@@ -100,9 +101,30 @@ public static class DearImGuiTheme
 
     private static unsafe void SetupCustomFont()
     {
-        var fontPath = Path.Combine(DearImGuiInjection.AssetsFolderPath, "Fonts", "Comfortaa-Medium.ttf");
+        string fontPath = "C:\\Windows\\Fonts\\msyh.ttc";
+        if (!File.Exists(fontPath))
+        {
+            fontPath = "C:\\Windows\\Fonts\\simsun.ttc";
+        }
+        if (!File.Exists(fontPath))
+        {
+            fontPath = "C:\\Windows\\Fonts\\simhei.ttf";
+        }
+        if (!File.Exists(fontPath))
+        {
+            fontPath = Path.Combine(DearImGuiInjection.AssetsFolderPath, "Fonts", "Comfortaa-Medium.ttf");
+        }
 
-        var font = ImGui.GetIO().Fonts.AddFontFromFileTTF(fontPath, 15);
+        ImFontPtr font;
+        if (fontPath.Contains("msyh") || fontPath.Contains("simsun") || fontPath.Contains("simhei"))
+        {
+            IntPtr glyphRanges = ImGui.GetIO().Fonts.GetGlyphRangesChineseFull();
+            font = ImGui.GetIO().Fonts.AddFontFromFileTTF(fontPath, 16, default, glyphRanges);
+        }
+        else
+        {
+            font = ImGui.GetIO().Fonts.AddFontFromFileTTF(fontPath, 15);
+        }
 
         ImGui.GetIO().NativePtr->FontDefault = font;
     }

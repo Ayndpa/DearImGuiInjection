@@ -60,8 +60,27 @@ internal class DearImGuiInjectionBasePluginIL2CPP : BasePlugin
     {
         try
         {
+            var assembly = System.Linq.Enumerable.FirstOrDefault(AppDomain.CurrentDomain.GetAssemblies(), ass => ass.GetName().Name == "UnityEngine.UI");
+            if (assembly == null)
+            {
+                Log.LogInfo("UnityEngine.UI assembly not found. Skipping EventSystem patch.");
+                return;
+            }
+            var eventSystemType = assembly.GetType("UnityEngine.EventSystems.EventSystem");
+            if (eventSystemType == null)
+            {
+                Log.LogInfo("EventSystem type not found in UnityEngine.UI. Skipping EventSystem patch.");
+                return;
+            }
+
             var allFlags = (BindingFlags)(-1);
-            _eventSystemUpdate = typeof(EventSystem).GetMethod(nameof(EventSystem.Update), allFlags);
+            _eventSystemUpdate = eventSystemType.GetMethod("Update", allFlags);
+            if (_eventSystemUpdate == null)
+            {
+                Log.LogWarning("EventSystem.Update method not found. Skipping EventSystem patch.");
+                return;
+            }
+
             _hooks = new Harmony(Metadata.GUID);
             _hookIgnoreUIObjectsWhenImGuiCursorIsVisible =
                 new(typeof(DearImGuiInjectionBasePluginIL2CPP).GetMethod(nameof(IgnoreUIObjectsWhenImGuiCursorIsVisible), allFlags));
@@ -69,7 +88,7 @@ internal class DearImGuiInjectionBasePluginIL2CPP : BasePlugin
         }
         catch (Exception e)
         {
-            Log.LogError(e);
+            Log.LogError("Failed to setup EventSystem patch: " + e);
         }
     }
 
